@@ -14,7 +14,7 @@ export const ActivityPage: React.FC = () => {
   useEffect(() => {
     void getActivities()
   }, [getActivities])
-  console.log(data)
+
   return (
     <S.Container>
       <>
