@@ -1,11 +1,12 @@
 import React, { useEffect } from "react"
 import styled from "styled-components"
-import { Spacing } from "shared/styles/styles"
+import { FontSize, FontWeight, Spacing } from "shared/styles/styles"
 import { useApi } from "shared/hooks/use-api"
 import { Activity } from "shared/models/activity"
 import { ActivityCard } from "staff-app/components/activity-card/activity-card.component"
 import { CenteredContainer } from "shared/components/centered-container/centered-container.component"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { Colors } from "shared/styles/colors"
 
 export const ActivityPage: React.FC = () => {
   const [getActivities, data, loadState] = useApi<{ activity: Activity[] }>({ url: "get-activities" })
@@ -13,7 +14,7 @@ export const ActivityPage: React.FC = () => {
   useEffect(() => {
     void getActivities()
   }, [getActivities])
-
+  console.log(data)
   return (
     <S.Container>
       <>
@@ -23,12 +24,14 @@ export const ActivityPage: React.FC = () => {
           </CenteredContainer>
         )}
 
+        {loadState === "loaded" && data?.activity.length === 0 && <S.Typography>Please complete one roll</S.Typography>}
+
         {loadState === "loaded" && data?.activity && (
           <S.GridContainer>
             {data.activity.map((activity, key) => {
               return (
-                <S.GridItem>
-                  <ActivityCard key={key} activity={activity} />
+                <S.GridItem key={key}>
+                  <ActivityCard activity={activity} />
                 </S.GridItem>
               )
             })}
@@ -54,5 +57,11 @@ const S = {
   `,
   GridItem: styled.div`
     align-self: stretch;
+  `,
+  Typography: styled.div`
+    text-align: center;
+    color: ${Colors.dark.base};
+    font-weight: ${FontWeight.strong};
+    font-size: ${FontSize.u1};
   `,
 }
