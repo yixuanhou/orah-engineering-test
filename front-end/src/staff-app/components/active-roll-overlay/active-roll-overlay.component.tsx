@@ -1,8 +1,10 @@
-import React from "react"
-import styled from "styled-components"
 import Button from "@material-ui/core/Button"
+import React, { useContext } from "react"
+import { StudentsContext } from "shared/contexts/students"
+import { useApi } from "shared/hooks/use-api"
 import { BorderRadius, Spacing } from "shared/styles/styles"
-import { RollStateList } from "staff-app/components/roll-state/roll-state-list.component"
+import { ItemType, RollStateList } from "staff-app/components/roll-state/roll-state-list.component"
+import styled from "styled-components"
 
 export type ActiveRollAction = "filter" | "exit"
 interface Props {
@@ -13,28 +15,59 @@ interface Props {
 export const ActiveRollOverlay: React.FC<Props> = (props) => {
   const { isActive, onItemClick } = props
 
+  const [saveRoll] = useApi({ url: "save-roll" })
+
+  const { originStudentList, studentList, setStudentList, setRollStateFilter } = useContext(StudentsContext)
+
+  const handleExit = () => {
+    setStudentList(originStudentList)
+    setRollStateFilter(null)
+    onItemClick("exit")
+  }
+
+  const handleFilter = (type: ItemType) => {
+    return setRollStateFilter(type)
+  }
+
+  const handleComplete = () => {
+    const selectedStudents = studentList?.filter((s) => s.rollState !== undefined)
+    const param = {
+      student_roll_states: selectedStudents?.map((s) => {
+        return {
+          student_id: s.id,
+          roll_state: s.rollState,
+        }
+      }),
+    }
+    saveRoll(param)
+    handleExit()
+  }
+
   return (
     <S.Overlay isActive={isActive}>
       <S.Content>
         <div>Class Attendance</div>
-        <div>
-          <RollStateList
-            stateList={[
-              { type: "all", count: 0 },
-              { type: "present", count: 0 },
-              { type: "late", count: 0 },
-              { type: "absent", count: 0 },
-            ]}
-          />
-          <div style={{ marginTop: Spacing.u6 }}>
-            <Button color="inherit" onClick={() => onItemClick("exit")}>
-              Exit
-            </Button>
-            <Button color="inherit" style={{ marginLeft: Spacing.u2 }} onClick={() => onItemClick("exit")}>
-              Complete
-            </Button>
+        {studentList && (
+          <div>
+            <RollStateList
+              stateList={[
+                { type: "all", count: studentList.filter((s) => s.rollState !== undefined).length },
+                { type: "present", count: studentList.filter((s) => s.rollState === "present").length },
+                { type: "late", count: studentList.filter((s) => s.rollState === "late").length },
+                { type: "absent", count: studentList.filter((s) => s.rollState === "absent").length },
+              ]}
+              onItemClick={handleFilter}
+            />
+            <div style={{ marginTop: Spacing.u6 }}>
+              <Button color="inherit" onClick={handleExit}>
+                Exit
+              </Button>
+              <Button color="inherit" style={{ marginLeft: Spacing.u2 }} onClick={handleComplete}>
+                Complete
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </S.Content>
     </S.Overlay>
   )
